@@ -15,7 +15,7 @@ CLIENT = SSHClient()
 CLIENT.load_system_host_keys()
 
 IP = "192.168.1.120"
-AUTH = ("Jetson", "Nano")
+AUTH = ("USERNAME", "PASSWORD")
 
 class sliders(tk.Frame):
     """
