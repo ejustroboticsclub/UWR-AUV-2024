@@ -92,7 +92,7 @@ class LengthEstimation(SegmentationModel):
 if __name__ == "__main__":
     image = cv2.imread("1_06_21-B4.jpg")
     model = LengthEstimation()
-    results = model.predict(image)
+    results = model.segment(image)
     polygon_points = model.get_object_polygon_points(results)
     data = model.get_total_length_in_cm_and_endpoints(polygon_points)
     image_with_length = model.draw_total_length_and_endpoints(image, data)
