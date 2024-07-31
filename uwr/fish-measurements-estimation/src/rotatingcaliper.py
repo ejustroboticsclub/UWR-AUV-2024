@@ -39,9 +39,13 @@ def rotatingCaliper(
         tuple[float, dict[str, Optional[np.ndarray]]]: a tuple that contains the maximum distance and
         a dict containing the two points that achieve it.
     """
+    pair: dict[str, Optional[np.ndarray]] = {"p1": None, "p2": None}
+    if points.shape[0] < 2:
+        return 0.0, pair
+
     hull: np.ndarray = np.squeeze(cv2.convexHull(points))
     n = len(hull)
-    pair: dict[str, Optional[np.ndarray]] = {"p1": None, "p2": None}
+    
 
     # Base Cases
     if n == 1:
