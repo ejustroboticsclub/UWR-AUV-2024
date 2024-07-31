@@ -9,7 +9,7 @@ class SegmentationModel:
     def __init__(self):
         self.model = ultralytics.YOLO(WEIGHTS_PATH)
     
-    def predict(self, image: np.ndarray, color_correct: bool = False):
+    def segment(self, image: np.ndarray, color_correct: bool = False):
         """
         Predict the segmentation of the image.
         Args:
@@ -74,7 +74,7 @@ class SegmentationModel:
 if __name__ == "__main__":
     model = SegmentationModel()
     image = cv2.imread("image1.jpg")
-    results = model.predict(image)
+    results = model.segment(image)
     colored_image = model.color_polygon_region(image, results)
     cv2.imwrite("colored_image.jpg", colored_image)
     # cv2.imshow("Colored Image", colored_image)
