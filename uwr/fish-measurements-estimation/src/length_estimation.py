@@ -9,13 +9,14 @@ LENGTH_IN_PIXELS_ARR_PATH = "../data/length_in_pixels.npy"
 LENGTH_IN_CM_ARR_PATH = "../data/length_in_cm.npy"
 k = 3
 
+
 class LengthEstimation(SegmentationModel):
     def __init__(self):
         super().__init__()
         self.length_in_pixels = np.load(LENGTH_IN_PIXELS_ARR_PATH)
         self.length_in_cm = np.load(LENGTH_IN_CM_ARR_PATH)
 
-    def knn(self, x: float, k: int) -> float:  
+    def knn(self, x: float, k: int) -> float:
         """
         Perform k-nearest neighbors regression to estimate the length in cm.
         Args:
@@ -26,9 +27,9 @@ class LengthEstimation(SegmentationModel):
         """
         # Calculate the absolute difference between x and each length in pixels
         differences = np.abs(self.length_in_pixels - x)
-        
+
         nearest_neighbors = []
-        
+
         # Iterate over the differences and their indices
         for i, diff in enumerate(differences):
             # If we have less than k neighbors, add the current one
@@ -79,7 +80,7 @@ class LengthEstimation(SegmentationModel):
                 continue
             data.append((total_length, p1, p2))
         return data
-    
+
     def draw_total_length_and_endpoints(self, image: np.ndarray, data: list[tuple[float, np.ndarray, np.ndarray]]):
         """
         Draw the total length and the endpoints of the detected objects on the image.
@@ -100,7 +101,8 @@ class LengthEstimation(SegmentationModel):
         image_copy = image.copy()
         for total_length, p1, p2 in data:
             # Draw line between endpoints
-            cv2.line(image_copy, tuple(p1), tuple(p2), color=COLOR_LINE, thickness=THICKNESS)
+            cv2.line(image_copy, tuple(p1), tuple(p2),
+                     color=COLOR_LINE, thickness=THICKNESS)
 
             # Compute middle point for placing text
             middle_point = tuple((p1 + p2) // 2)
@@ -108,20 +110,25 @@ class LengthEstimation(SegmentationModel):
             # Set text properties
             text = f"{total_length:.2f} cm"
             font = cv2.FONT_HERSHEY_SIMPLEX
-            (text_width, text_height), baseline = cv2.getTextSize(text, font, FONT_SCALE, FONT_THICKNESS)
+            (text_width, text_height), baseline = cv2.getTextSize(
+                text, font, FONT_SCALE, FONT_THICKNESS)
 
             # Define rectangle position and size with increased padding
-            rectangle_top_left = (middle_point[0] - text_width // 2 - PADDING, middle_point[1] - text_height // 2 - PADDING)
-            rectangle_bottom_right = (middle_point[0] + text_width // 2 + PADDING, middle_point[1] + text_height // 2 + PADDING)
+            rectangle_top_left = (
+                middle_point[0] - text_width // 2 - PADDING, middle_point[1] - text_height // 2 - PADDING)
+            rectangle_bottom_right = (
+                middle_point[0] + text_width // 2 + PADDING, middle_point[1] + text_height // 2 + PADDING)
 
             # Draw the rectangle with a white background
-            cv2.rectangle(image_copy, rectangle_top_left, rectangle_bottom_right, RECTANGLE_COLOR, cv2.FILLED)
+            cv2.rectangle(image_copy, rectangle_top_left,
+                          rectangle_bottom_right, RECTANGLE_COLOR, cv2.FILLED)
 
             # Put the text inside the rectangle
             cv2.putText(
                 image_copy,
                 text,
-                (middle_point[0] - text_width // 2, middle_point[1] + text_height // 2),
+                (middle_point[0] - text_width // 2,
+                 middle_point[1] + text_height // 2),
                 font,
                 FONT_SCALE,
                 COLOR_TEXT,
@@ -130,7 +137,8 @@ class LengthEstimation(SegmentationModel):
             )
 
         return image_copy
-    
+
+
 if __name__ == "__main__":
     image = cv2.imread("../data/external/all-pagrus-images/1_06_21-B4.jpg")
 
