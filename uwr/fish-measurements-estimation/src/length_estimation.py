@@ -4,9 +4,49 @@ import numpy as np
 import cv2
 
 
+LENGTH_IN_PIXELS_ARR_PATH = "../data/length_in_pixels.npy"
+LENGTH_IN_CM_ARR_PATH = "../data/length_in_cm.npy"
+k = 3
+
 class LengthEstimation(SegmentationModel):
     def __init__(self):
         super().__init__()
+        self.length_in_pixels = np.load(LENGTH_IN_PIXELS_ARR_PATH)
+        self.length_in_cm = np.load(LENGTH_IN_CM_ARR_PATH)
+
+    def knn(self, x: float, k: int) -> float:  
+        """
+        Perform k-nearest neighbors regression to estimate the length in cm.
+        Args:
+            x (float): length in pixels.
+            k (int): number of neighbors to consider.
+        Returns:
+            float: estimated length in cm.
+        """
+        # Calculate the absolute difference between x and each length in pixels
+        differences = np.abs(self.length_in_pixels - x)
+        
+        nearest_neighbors = []
+        
+        # Iterate over the differences and their indices
+        for i, diff in enumerate(differences):
+            # If we have less than k neighbors, add the current one
+            if len(nearest_neighbors) < k:
+                nearest_neighbors.append((diff, self.length_in_cm[i]))
+                nearest_neighbors.sort()  # Keep the list sorted
+            else:
+                # Check if the current neighbor is closer than the farthest in the list
+                if diff < nearest_neighbors[-1][0]:
+                    nearest_neighbors[-1] = (diff, self.length_in_cm[i])
+                    nearest_neighbors.sort()  # Keep the list sorted
+
+        # Extract the lengths in cm from the nearest neighbors
+        nearest_lengths_cm = [length for _, length in nearest_neighbors]
+
+        # Compute the average of these lengths in cm
+        average_length_cm = np.mean(nearest_lengths_cm)
+
+        return average_length_cm
 
     def transform_total_length_to_cm(self, total_length: float) -> float:
         """
@@ -16,6 +56,7 @@ class LengthEstimation(SegmentationModel):
         Returns:
             float: total length in cm.
         """
+        total_length = self.knn(total_length, k)
         return total_length
 
     def get_total_length_in_cm_and_endpoints(self, polygon_points: np.ndarray) -> list[tuple[float, np.ndarray, np.ndarray]]:
@@ -48,12 +89,12 @@ class LengthEstimation(SegmentationModel):
             np.ndarray (BGR format): image with the total length and the endpoints of the detected objects drawn on.
         """
         COLOR_LINE = (0, 255, 0)
-        COLOR_TEXT = (0, 0, 255) 
+        COLOR_TEXT = (0, 0, 255)
         THICKNESS = 4
         RECTANGLE_COLOR = (255, 255, 255)
-        FONT_SCALE = 1.5
-        FONT_THICKNESS = 2
-
+        FONT_SCALE = 2.5  # Increased font scale
+        FONT_THICKNESS = 4  # Increased font thickness
+        PADDING = 30  # Increased padding for the rectangle
 
         image_copy = image.copy()
         for total_length, p1, p2 in data:
@@ -68,9 +109,9 @@ class LengthEstimation(SegmentationModel):
             font = cv2.FONT_HERSHEY_SIMPLEX
             (text_width, text_height), baseline = cv2.getTextSize(text, font, FONT_SCALE, FONT_THICKNESS)
 
-            # Define rectangle position and size
-            rectangle_top_left = (middle_point[0] - text_width // 2 - 10, middle_point[1] - text_height // 2 - 10)
-            rectangle_bottom_right = (middle_point[0] + text_width // 2 + 10, middle_point[1] + text_height // 2 + 10)
+            # Define rectangle position and size with increased padding
+            rectangle_top_left = (middle_point[0] - text_width // 2 - PADDING, middle_point[1] - text_height // 2 - PADDING)
+            rectangle_bottom_right = (middle_point[0] + text_width // 2 + PADDING, middle_point[1] + text_height // 2 + PADDING)
 
             # Draw the rectangle with a white background
             cv2.rectangle(image_copy, rectangle_top_left, rectangle_bottom_right, RECTANGLE_COLOR, cv2.FILLED)
@@ -90,7 +131,15 @@ class LengthEstimation(SegmentationModel):
         return image_copy
     
 if __name__ == "__main__":
-    image = cv2.imread("1_06_21-B4.jpg")
+    image = cv2.imread("../data/external/all-pagrus-images/1_06_21-B4.jpg")
+
+    # Define the scaling factors
+    # scale_factor_x = 2  # Scaling factor for width
+    # scale_factor_y = 2  # Scaling factor for height
+    # # Resize the image
+    # scaled_image = cv2.resize(image, None, fx=scale_factor_x, fy=scale_factor_y, interpolation=cv2.INTER_LINEAR)
+    # image = scaled_image
+
     model = LengthEstimation()
     results = model.segment(image)
     polygon_points = model.get_object_polygon_points(results)
