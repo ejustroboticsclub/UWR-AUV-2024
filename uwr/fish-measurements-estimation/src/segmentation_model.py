@@ -5,10 +5,11 @@ from color_correct import correct
 
 WEIGHTS_PATH = "../models/best-models/segmentation_model_last.pt"
 
+
 class SegmentationModel:
     def __init__(self):
         self.model = ultralytics.YOLO(WEIGHTS_PATH)
-    
+
     def segment(self, image: np.ndarray, color_correct: bool = False):
         """
         Predict the segmentation of the image.
@@ -38,7 +39,7 @@ class SegmentationModel:
         # Return an empty list if no objects are detected.
         if masks is None:
             return []
-        
+
         # get the x, y coordinates of the polygon points of the detected objects.
         polygon_points = masks.xy
 
@@ -46,7 +47,7 @@ class SegmentationModel:
         polygon_points_int = [array.astype(int) for array in polygon_points]
 
         return polygon_points_int
-    
+
     def color_polygon_region(self, image, results, mask_color=(255, 0, 0)) -> np.ndarray:
         """
         Color the region of the detected object in the image.
@@ -63,13 +64,14 @@ class SegmentationModel:
         # Return the original image if no objects are detected.
         if len(polygon_points) == 0:
             return image
-        
+
         # Fill the detected objects region with the mask color.
         image_copy = image.copy()
         for polygon in polygon_points:
             cv2.fillPoly(image_copy, [polygon], mask_color)
-        
+
         return image_copy
+
 
 if __name__ == "__main__":
     model = SegmentationModel()
@@ -80,6 +82,3 @@ if __name__ == "__main__":
     # cv2.imshow("Colored Image", colored_image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-
-
-        
