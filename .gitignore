@@ -9,3 +9,5 @@ uwr/fish-measurements-estimation/data/external/all-fish-images
 uwr/fish-measurements-estimation/data/external/pagrus-images-with-water-effect
 uwr/fish-measurements-estimation/results
 uwr/fish-measurements-estimation/notebooks/Test.ipynb
+auv/sample-insertion/src/detection/__pycache__
+auv/sample-insertion/src/detection/LineFollowerAndLaneKeeper.py
