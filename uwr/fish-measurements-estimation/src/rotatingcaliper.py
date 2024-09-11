@@ -45,7 +45,6 @@ def rotatingCaliper(
 
     hull: np.ndarray = np.squeeze(cv2.convexHull(points))
     n = len(hull)
-    
 
     # Base Cases
     if n == 1:
