@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 
 
+COLOR_CORRECT = False
 LENGTH_IN_PIXELS_ARR_PATH = "../data/length_in_pixels.npy"
 LENGTH_IN_CM_ARR_PATH = "../data/length_in_cm.npy"
 k = 3
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     # image = scaled_image
 
     model = LengthEstimation()
-    results = model.segment(image)
+    results = model.segment(image, COLOR_CORRECT)
     polygon_points = model.get_object_polygon_points(results)
     data = model.get_total_length_in_cm_and_endpoints(polygon_points)
     image_with_length = model.draw_total_length_and_endpoints(image, data)
