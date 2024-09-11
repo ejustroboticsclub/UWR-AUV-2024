@@ -21,7 +21,8 @@ class SegmentationModel:
         image_copy = image.copy()
         if color_correct:
             image_copy = correct(image_copy)
-        return self.model(image_copy)[0]
+        results = self.model(image_copy)[0]
+        return results
 
     def get_object_polygon_points(self, results) -> list[np.ndarray]:
         """
@@ -31,7 +32,6 @@ class SegmentationModel:
             results: results of the segmentation model.
         Returns:
             list[np.ndarray]: list of polygons of detected objects.
-            The length of the list is the number of detected objects.
         """
         masks = results.masks
 
@@ -58,7 +58,7 @@ class SegmentationModel:
             np.ndarray (BGR format): image with the detected object region colored.
         """
         # Get the polygon points of the detected objects.
-        polygon_points = self.get_object_polygons(image, results)
+        polygon_points = self.get_object_polygon_points(results)
 
         # Return the original image if no objects are detected.
         if len(polygon_points) == 0:
@@ -73,7 +73,7 @@ class SegmentationModel:
 
 if __name__ == "__main__":
     model = SegmentationModel()
-    image = cv2.imread("image1.jpg")
+    image = cv2.imread("../data/external/all-pagrus-images/1_06_21-B4.jpg")
     results = model.segment(image)
     colored_image = model.color_polygon_region(image, results)
     cv2.imwrite("colored_image.jpg", colored_image)
