@@ -141,7 +141,8 @@ class LengthEstimation(SegmentationModel):
 
 if __name__ == "__main__":
     image = cv2.imread("../data/external/all-pagrus-images/1_06_21-B4.jpg")
-
+    if image.shape != (3024, 4032, 3): # comman shape in the data
+        image = cv2.resize(image, (4032, 3024))
     # Define the scaling factors
     # scale_factor_x = 2  # Scaling factor for width
     # scale_factor_y = 2  # Scaling factor for height
