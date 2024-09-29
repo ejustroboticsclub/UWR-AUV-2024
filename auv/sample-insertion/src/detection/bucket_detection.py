@@ -278,14 +278,16 @@ class BucketDetection:
         if color_correct:
             image_copy = correct(image_copy)
 
+        image_copy = cv2.GaussianBlur(image_copy, (5, 5), 0)
+
         # Convert the image to the HSV color space
         hsv_image = cv2.cvtColor(image_copy, cv2.COLOR_BGR2HSV)
 
         # Define lower and upper bounds for the red color in HSV
-        lower_red1 = np.array([0, 75, 20])
+        lower_red1 = np.array([0, 155, 84])
         upper_red1 = np.array([10, 255, 255])
 
-        lower_red2 = np.array([160, 75, 20])
+        lower_red2 = np.array([130, 155, 84])
         upper_red2 = np.array([180, 255, 255])
 
         # Create masks to detect the red color in both specified ranges
@@ -293,7 +295,14 @@ class BucketDetection:
         upper_mask = cv2.inRange(hsv_image, lower_red2, upper_red2)
 
         # Combine the lower and upper masks to get a single mask
-        combined_mask = lower_mask + upper_mask
+        combined_mask = cv2.bitwise_or(lower_mask, upper_mask)
+
+        # lower = np.array([90, 155, 84])
+        # upper = np.array([179, 255, 255])
+
+        # mask = cv2.inRange(hsv_image, lower, upper)
+
+        # return mask
 
         return combined_mask
 
@@ -326,12 +335,12 @@ class BucketDetection:
 
     def detect_yellow_color(self, image: np.ndarray, color_correct: bool = False) -> np.ndarray:
         """
-        Detect yellow color in the image.
+        Detect yellow and orange colors in the image.
         Args:
-            image (np.ndarray) - BGR format: The image in which the yellow color is to be detected.
-            color_correct (bool) - Whether to apply color correction to the image before detection.
+            image (np.ndarray): The image in which the colors are to be detected (BGR format).
+            color_correct (bool): Whether to apply color correction to the image before detection.
         Returns:
-            np.ndarray - BGR format: The mask of the yellow color in the image.
+            np.ndarray: Mask of the yellow and orange colors in the image.
         """
         image_copy = image.copy()
 
@@ -339,17 +348,27 @@ class BucketDetection:
         if color_correct:
             image_copy = correct(image_copy)
 
+        image_copy = cv2.GaussianBlur(image_copy, (5, 5), 0)
+
         # Convert the image to the HSV color space
         hsv_image = cv2.cvtColor(image_copy, cv2.COLOR_BGR2HSV)
 
-        # Define lower and upper bounds for the yellow color in HSV
-        lower_yellow = np.array([20, 100, 100])
-        upper_yellow = np.array([30, 255, 255])
+        # Define lower and upper bounds for the orange and yellow colors in HSV
+        lower_orange = np.array([5, 50, 50])   # Extended lower bound to capture darker oranges
+        upper_orange = np.array([25, 255, 255])  # Capturing lighter oranges
 
-        # Create mask to detect the yellow color
-        mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+        # Expanded HSV bounds for yellow (wider range to capture different lighting)
+        lower_yellow = np.array([15, 50, 50])   # Lowered the saturation to detect pale yellows
+        upper_yellow = np.array([40, 255, 255]) # Upper hue for yellow
 
-        return mask
+        # Create masks to detect orange and yellow colors
+        orange_mask = cv2.inRange(hsv_image, lower_orange, upper_orange)
+        yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
+
+        # Combine the orange and yellow masks to get a single mask
+        combined_mask = cv2.bitwise_or(orange_mask, yellow_mask)
+
+        return combined_mask
 
     def extract_buckets_from_image(self, image: np.ndarray, results) -> list[np.ndarray]:
         """
@@ -385,8 +404,8 @@ class BucketDetection:
 
 if __name__ == "__main__":
     # Load an image
-    image_path = "../../images/image5.jpg"
-    color_correct = True
+    image_path = "../../images/image1.jpg"
+    color_correct = False
     image = cv2.imread(image_path)
 
     # Initialize the BucketDetection class
@@ -402,9 +421,9 @@ if __name__ == "__main__":
     bucket_images = bucket_detector.extract_buckets_from_image(image, results)
 
     # Display the bucket images
-    # if bucket_images is not None:
-    #     for i, bucket_image in enumerate(bucket_images):
-    #         cv2.imshow(f"Bucket {i + 1}", bucket_image)
+    if bucket_images is not None:
+        for i, bucket_image in enumerate(bucket_images):
+            cv2.imshow(f"Bucket {i + 1}", bucket_image)
 
     # Detect the red color of the buckets
     if bucket_images is not None:
@@ -431,3 +450,7 @@ if __name__ == "__main__":
     cv2.imshow("Detected Buckets", image_with_boxes)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+## Comments:
+# Red detection is good (No color correction)
+# Yellow detection: not bad
