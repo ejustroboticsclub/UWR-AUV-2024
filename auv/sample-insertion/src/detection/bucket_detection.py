@@ -108,6 +108,45 @@ class BucketDetection:
         else:
             return bboxes, scores
 
+    def get_direction_green(self, image: np.ndarray, bounding_boxes: list[list[int]], color_correct: bool = False) -> tuple[int, int]:
+        """
+        Get the direction of the green bucket based on the bounding boxes.
+        Args:
+            image (np.ndarray) - BGR format: The original image containing the detected buckets.
+            bounding_boxes (list[list[int]]) - A list of bounding boxes in the format [x1, y1, x2, y2].
+            color_correct (bool) - Whether to apply color correction to the image before color detection.
+        Returns:
+            tuple[int, int]: The direction of the green bucket in the format (x, y).
+            None, None: If no green bucket is detected in the image.
+        """
+        x = None
+        y = None
+
+        # Check if there are no bounding boxes
+        if bounding_boxes is None:
+            return x, y
+
+        for bounding_box in bounding_boxes:
+            x1, y1, x2, y2 = bounding_box
+            bucket_image = image[y1:y2, x1:x2]
+
+            red_mask = self.detect_color(bucket_image, "red", color_correct)
+            red_pixels = cv2.countNonZero(red_mask)
+            total_pixels = bucket_image.shape[0] * bucket_image.shape[1]
+            red_ratio = red_pixels / total_pixels
+
+            yellow_mask = self.detect_color(
+                bucket_image, "yellow", color_correct)
+            yellow_pixels = cv2.countNonZero(yellow_mask)
+            yellow_ratio = yellow_pixels / total_pixels
+
+            if red_ratio < RATIO_COLOR_DETECTION_THRESHOLD and yellow_ratio < RATIO_COLOR_DETECTION_THRESHOLD:
+                x = (x1 + x2) // 2
+                y = y1
+                break
+
+        return x, y
+
     def get_direction_color(self, image: np.ndarray, bounding_boxes: list[list[int]], color: str, color_correct: bool = False) -> tuple[int, int]:
         """
         Get the direction of the bucket based on the color of the bucket.
@@ -188,8 +227,12 @@ class BucketDetection:
                 bounding_boxes, scores)
             return x, y
         elif filter_criteria == "color":
-            x, y = self.get_direction_color(
-                image, bounding_boxes, color, color_correct)
+            if color != "green":
+                x, y = self.get_direction_color(
+                    image, bounding_boxes, color, color_correct)
+            else:
+                x, y = self.get_direction_green(
+                    image, bounding_boxes, color_correct)
             return x, y
         else:
             raise ValueError(
@@ -354,12 +397,14 @@ class BucketDetection:
         hsv_image = cv2.cvtColor(image_copy, cv2.COLOR_BGR2HSV)
 
         # Define lower and upper bounds for the orange and yellow colors in HSV
-        lower_orange = np.array([5, 50, 50])   # Extended lower bound to capture darker oranges
+        # Extended lower bound to capture darker oranges
+        lower_orange = np.array([5, 50, 50])
         upper_orange = np.array([25, 255, 255])  # Capturing lighter oranges
 
         # Expanded HSV bounds for yellow (wider range to capture different lighting)
-        lower_yellow = np.array([15, 50, 50])   # Lowered the saturation to detect pale yellows
-        upper_yellow = np.array([40, 255, 255]) # Upper hue for yellow
+        # Lowered the saturation to detect pale yellows
+        lower_yellow = np.array([15, 50, 50])
+        upper_yellow = np.array([40, 255, 255])  # Upper hue for yellow
 
         # Create masks to detect orange and yellow colors
         orange_mask = cv2.inRange(hsv_image, lower_orange, upper_orange)
@@ -445,12 +490,11 @@ if __name__ == "__main__":
     else:
         print("No bucket detected in the image.")
 
-
     # Display the image with bounding boxes
     cv2.imshow("Detected Buckets", image_with_boxes)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-## Comments:
+# Comments:
 # Red detection is good (No color correction)
 # Yellow detection: not bad
